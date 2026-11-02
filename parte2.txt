@@ -1,0 +1,281 @@
+# Fase 8 — Colaboración en tiempo real y proyectos compartidos
+
+## Objetivo
+
+Extender el sistema DBML para permitir que múltiples usuarios colaboren sobre un mismo proyecto mediante enlaces compartidos, de forma similar a Google Docs, Figma o dbdiagram.io.
+
+La colaboración debe funcionar a nivel de proyecto, conservando la arquitectura existente de paquetes, diagramas y archivos DBML.
+
+## 1. Proyectos compartidos mediante enlaces
+
+Cada proyecto debe contar con una URL única y estable.
+
+Ejemplo:
+
+```text
+https://app.example.com/projects/abc123
+```
+
+También debe ser posible compartir un paquete específico:
+
+```text
+https://app.example.com/projects/abc123/packages/ventas
+```
+
+Requisitos:
+
+- Crear y copiar enlaces compartidos.
+- Abrir proyectos mediante URL.
+- Navegar directamente a un paquete.
+- Conservar la pestaña activa en la URL.
+- Permitir enlaces directos a tablas y conectores.
+- Soportar enlaces privados y públicos.
+- Permitir revocar enlaces compartidos.
+
+Los identificadores de las URL no deben depender de nombres de archivos o posiciones visuales.
+
+## 2. Permisos y roles
+
+Implementar control de acceso por proyecto.
+
+| Rol | Permisos |
+|---|---|
+| Owner | Administración completa |
+| Editor | Modificar DBML y diagramas |
+| Commenter | Consultar y comentar |
+| Viewer | Solo lectura |
+
+Los enlaces compartidos deben poder configurarse como:
+
+- Restringidos a usuarios invitados.
+- Accesibles mediante enlace, en modo lectura.
+- Accesibles mediante enlace, con edición autorizada.
+
+No permitir edición anónima por defecto.
+
+Aplicar autorización en el servidor, no únicamente en la interfaz.
+
+## 3. Colaboración en tiempo real
+
+Permitir que varios usuarios editen simultáneamente archivos DBML del mismo proyecto.
+
+Requisitos:
+
+- Sincronización mediante WebSocket o tecnología equivalente.
+- Visualización de usuarios conectados.
+- Cursores y selecciones remotas.
+- Indicadores de archivos y paquetes activos.
+- Actualización automática de diagramas.
+- Reconexión después de interrupciones.
+- Persistencia de cambios.
+
+Evaluar CRDT mediante Yjs o Automerge, o un mecanismo OT equivalente, según la arquitectura existente.
+
+Evitar implementar manualmente algoritmos complejos de resolución de conflictos si existen bibliotecas consolidadas.
+
+## 4. Sincronización del modelo lógico
+
+Los cambios realizados por un usuario deben propagarse a los demás.
+
+Flujo esperado:
+
+```text
+Usuario A modifica ventas.dbml
+          |
+          v
+Sincronización colaborativa
+          |
+          v
+Compilación y validación
+          |
+          v
+Actualización del esquema global
+          |
+          v
+Actualización de diagramas afectados
+          |
+          v
+Usuario B visualiza los cambios
+```
+
+Consideraciones:
+
+- Sincronizar los documentos fuente como unidad editable.
+- No mantener copias independientes del esquema lógico por usuario.
+- Evitar recompilar todo el proyecto por cada pulsación.
+- Utilizar actualizaciones incrementales cuando sea posible.
+- Mostrar errores de sintaxis sin bloquear la edición colaborativa.
+- Mantener la última versión válida del diagrama mientras existan errores temporales.
+
+## 5. Colaboración sobre diagramas
+
+Además del código DBML, sincronizar:
+
+- Posiciones de tablas.
+- Zoom y disposición persistente del diagrama, cuando corresponda.
+- Modos Full, Compact y Connector.
+- Configuración de conectores.
+- Elementos visuales persistentes.
+
+Distinguir entre:
+
+**Estado compartido:** modificaciones que deben persistirse y ser visibles para todos.
+
+**Estado personal:** zoom temporal, pestaña activa, selección, paneles abiertos y preferencias locales.
+
+No sincronizar automáticamente el estado personal como si fuera una modificación del proyecto.
+
+## 6. Comentarios y discusiones
+
+Permitir comentarios asociados a:
+
+- Proyecto.
+- Paquete.
+- Tabla.
+- Columna.
+- Relación.
+- Conector.
+
+Requisitos:
+
+- Crear comentarios.
+- Responder.
+- Resolver discusiones.
+- Mostrar autor y fecha.
+- Navegar al elemento comentado.
+- Mantener referencias estables aunque cambie el layout.
+
+Los comentarios no deben modificar el esquema SQL.
+
+## 7. Historial y versiones
+
+Implementar historial de cambios por proyecto.
+
+Requisitos:
+
+- Registrar autor y fecha.
+- Consultar versiones anteriores.
+- Comparar cambios.
+- Restaurar versiones autorizadas.
+- Mantener consistencia entre archivos DBML y configuración visual.
+- Permitir identificar qué paquetes fueron afectados.
+
+La restauración debe generar una nueva revisión auditable, evitando eliminar silenciosamente el historial.
+
+## 8. Arquitectura tecnológica
+
+Investigar e integrar los siguientes componentes según el stack existente:
+
+**Frontend**
+- Editor colaborativo.
+- Indicadores de presencia.
+- Cursores remotos.
+- Comentarios.
+- Gestión de permisos.
+- Estado de sincronización.
+
+**Backend**
+- Autenticación.
+- Autorización.
+- Gestión de proyectos.
+- Gestión de invitaciones.
+- Sesiones colaborativas.
+- Persistencia.
+- Historial de revisiones.
+
+**Comunicación**
+- WebSocket o transporte equivalente.
+- Sincronización CRDT/OT.
+- Reconexión y recuperación de estado.
+- Control de concurrencia.
+
+**Persistencia**
+- Proyectos.
+- Miembros y permisos.
+- Archivos DBML.
+- Estado colaborativo.
+- Configuración visual.
+- Comentarios.
+- Revisiones.
+
+Evaluar tecnologías como Yjs, Automerge, Hocuspocus o equivalentes, sin introducirlas automáticamente si el repositorio ya dispone de una solución apropiada.
+
+## 9. Seguridad
+
+Implementar:
+
+- Validación de permisos en cada operación.
+- Enlaces de invitación revocables.
+- Tokens de acceso seguros.
+- Protección contra acceso entre proyectos.
+- Validación de mensajes colaborativos.
+- Límites de tamaño y frecuencia de operaciones.
+- Registro de acciones administrativas.
+
+No exponer archivos de proyectos privados mediante URLs públicas sin autorización.
+
+## 10. Pruebas de aceptación
+
+Verificar que:
+
+1. Dos usuarios puedan abrir el mismo proyecto mediante enlace.
+2. Dos usuarios puedan editar simultáneamente el mismo archivo.
+3. Los cambios se sincronicen sin pérdida de información.
+4. Los diagramas se actualicen después de cambios válidos.
+5. Un Viewer no pueda modificar el proyecto.
+6. Un enlace revocado deje de otorgar acceso.
+7. Un usuario pueda compartir un enlace directo a una tabla.
+8. Los comentarios permanezcan asociados a su entidad.
+9. La reconexión no provoque duplicación de cambios.
+10. El historial permita recuperar una versión anterior.
+11. Los cambios de un paquete actualicen las referencias de otros paquetes.
+12. Los proyectos privados permanezcan inaccesibles para usuarios no autorizados.
+
+## 11. Manual de usuario
+
+Actualizar el manual existente para explicar:
+
+- Cómo compartir un proyecto.
+- Cómo invitar colaboradores.
+- Cómo configurar permisos.
+- Cómo colaborar en tiempo real.
+- Cómo compartir enlaces a paquetes y tablas.
+- Cómo utilizar comentarios.
+- Cómo consultar y restaurar versiones.
+- Cómo resolver conflictos de sincronización.
+
+Incluir ejemplos funcionales y capturas de pantalla cuando sea posible.
+
+## 12. Plan de implementación
+
+Implementar incrementalmente:
+
+**Etapa A — Compartir proyectos**
+- Identidad de proyectos.
+- URLs estables.
+- Autenticación.
+- Roles y permisos.
+- Enlaces compartidos.
+
+**Etapa B — Colaboración**
+- Sincronización de archivos.
+- Presencia.
+- Cursores remotos.
+- Reconexión.
+- Compilación incremental.
+
+**Etapa C — Revisión**
+- Comentarios.
+- Historial.
+- Versiones.
+- Restauración.
+
+**Etapa D — Validación**
+- Pruebas de concurrencia.
+- Pruebas de seguridad.
+- Pruebas de rendimiento.
+- Documentación.
+
+Antes de implementar, inspecciona el stack tecnológico y presenta una propuesta concreta de arquitectura colaborativa.
+
+**Principio fundamental: múltiples usuarios colaboran sobre un mismo proyecto y un mismo modelo lógico, manteniendo diagramas sincronizados, permisos seguros e historial de cambios.**

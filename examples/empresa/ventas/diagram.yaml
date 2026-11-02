@@ -1,0 +1,12 @@
+package: ventas
+external:
+  - table: public.paises
+    display: connector
+    label: CAT-01
+layout:
+  node:ventas:public.paises:0:
+    x: 240
+    y: 200
+  node:ventas:public.pedidos:
+    x: 720
+    y: 392

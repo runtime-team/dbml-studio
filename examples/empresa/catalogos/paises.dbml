@@ -1,0 +1,4 @@
+Table paises {
+  id int [pk]
+  nombre varchar
+}

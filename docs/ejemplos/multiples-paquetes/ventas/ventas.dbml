@@ -1,0 +1,8 @@
+use * from '../catalogos/paises'
+use * from '../empleados/empleados'
+
+Table pedidos {
+  id int [pk]
+  pais_id int [not null, ref: > paises.id]
+  vendedor_id int [ref: > empleados.id]
+}

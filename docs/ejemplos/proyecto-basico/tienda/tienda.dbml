@@ -1,0 +1,23 @@
+Table clientes {
+  id int [pk, increment]
+  nombre varchar [not null]
+  correo varchar [unique]
+}
+
+Table productos {
+  id int [pk, increment]
+  nombre varchar [not null]
+  precio decimal(10,2)
+}
+
+Table pedidos {
+  id int [pk, increment]
+  cliente_id int [not null, ref: > clientes.id]
+  creado timestamp
+}
+
+Table lineas_pedido {
+  pedido_id int [ref: > pedidos.id]
+  producto_id int [ref: > productos.id]
+  cantidad int [not null]
+}

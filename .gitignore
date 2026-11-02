@@ -1,0 +1,38 @@
+# Dependencies and local package caches
+/node_modules/
+/.bun-cache/
+
+# Build artifacts and generated exports
+/dist/
+/out/
+/build/
+/coverage/
+/docs/.vitepress/cache/
+/docs/.vitepress/dist/
+**/output/
+*.tgz
+/examples.zip
+
+# Local application state and user projects
+/.data/
+/projects/
+/.tmp/
+/.impeccable/
+*.sqlite
+*.sqlite-*
+
+# Environment variables
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# Logs, caches, and editor files
+logs/
+*.log
+report.*.json
+.eslintcache
+.cache/
+*.tsbuildinfo
+.idea/
+.DS_Store

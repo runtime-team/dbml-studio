@@ -1,0 +1,7 @@
+use * from './paises'
+
+Table estados {
+  id int [pk]
+  pais_id int [not null, ref: > paises.id]
+  nombre varchar [not null]
+}

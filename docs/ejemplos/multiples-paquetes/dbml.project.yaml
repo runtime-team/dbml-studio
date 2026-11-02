@@ -1,0 +1,10 @@
+name: sistema-empresarial
+version: 1
+# Sin source.packages: cada subdirectorio con archivos .dbml es un paquete.
+source:
+  exclude: ["*.borrador.dbml"]
+output:
+  directory: output
+  formats: [svg, pdf]
+options:
+  sqlDialect: postgres

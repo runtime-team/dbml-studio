@@ -1,0 +1,918 @@
+# Especificación técnica integral: Extensión de DBML para proyectos modulares, diagramas interconectados y referencias visuales
+
+## 1. Rol del agente
+
+Actúa como arquitecto de software e ingeniero especializado en:
+
+- Diseño de compiladores e intérpretes.
+- Parsers y gramáticas de lenguajes DSL.
+- Abstract Syntax Trees (AST).
+- Análisis semántico y resolución de símbolos.
+- Sistemas de módulos y paquetes.
+- Modelado de bases de datos relacionales.
+- Diagramas entidad-relación (ERD).
+- Renderizado de grafos.
+- Interfaces de usuario interactivas.
+- Generación de SVG y PDF.
+- Ingeniería de software y pruebas automatizadas.
+
+Tu tarea es analizar el repositorio existente y diseñar e implementar una extensión de DBML que permita organizar bases de datos grandes mediante proyectos, paquetes y diagramas interconectados.
+
+**No debes comenzar modificando código sin inspeccionar primero la arquitectura existente.**
+
+Debes reutilizar los componentes y dependencias actuales siempre que sea técnicamente razonable.
+
+---
+
+# 2. Objetivo general
+
+Extender DBML para soportar:
+
+1. Proyectos compuestos por múltiples archivos DBML.
+2. Paquetes inspirados en los paquetes de Go.
+3. Un diagrama principal renderizable por paquete.
+4. Relaciones entre tablas de diferentes paquetes.
+5. Tablas externas referenciadas (`TableRef`).
+6. Conectores entre diagramas (`RelationshipConnector`).
+7. Tres modos de representación externa: Full, Compact y Connector.
+8. Navegación entre diagramas mediante pestañas.
+9. Selector rápido de paquetes.
+10. Menús contextuales.
+11. Navegación bidireccional entre diagramas.
+12. Inspector global de referencias.
+13. Exportación SVG y PDF.
+14. Documentación imprimible.
+15. Manual de usuario en español con ejemplos funcionales.
+
+La solución debe mantener un único modelo lógico de base de datos y permitir múltiples representaciones visuales.
+
+**Principio fundamental: un proyecto, un esquema lógico global, múltiples paquetes y un diagrama principal por paquete.**
+
+---
+
+# 3. Principios arquitectónicos
+
+## 3.1 Separación de responsabilidades
+
+Distinguir explícitamente:
+
+**Project Model**
+- Configuración del proyecto.
+- Archivos fuente.
+- Paquetes.
+- Dependencias.
+- Opciones de compilación.
+
+**Schema Model**
+- Tablas reales.
+- Columnas.
+- Tipos.
+- Claves primarias.
+- Claves foráneas.
+- Índices.
+- Restricciones.
+- Relaciones.
+
+**Diagram Model**
+- Diagramas.
+- Instancias visuales de tablas.
+- Tablas externas.
+- Conectores.
+- Posiciones.
+- Estilos.
+- Visibilidad de columnas.
+
+**Navigation Model**
+- Pestañas.
+- Referencias entre diagramas.
+- Historial de navegación.
+- Selección y enfoque.
+- Índice global de referencias.
+
+Estos modelos deben estar relacionados mediante identificadores estables, pero no deben confundirse.
+
+## 3.2 Identificadores
+
+Diseñar identificadores diferenciados:
+
+- `ProjectId`
+- `PackageId`
+- `TableId`
+- `ColumnId`
+- `RelationshipId`
+- `DiagramId`
+- `NodeId`
+- `ConnectorId`
+
+Una tabla puede tener múltiples `NodeId`, pero solamente un `TableId` dentro del esquema global.
+
+No utilizar números de página ni posiciones visuales como identificadores lógicos.
+
+---
+
+# 4. Sistema de proyectos
+
+## 4.1 Estructura propuesta
+
+```text
+mi-proyecto/
+├── dbml.project.yaml
+│
+├── catalogos/
+│   ├── package.dbml
+│   ├── paises.dbml
+│   └── estados.dbml
+│
+├── ventas/
+│   ├── package.dbml
+│   ├── ventas.dbml
+│   └── detalles.dbml
+│
+├── empleados/
+│   ├── package.dbml
+│   └── empleados.dbml
+│
+├── docs/
+│   ├── manual-usuario.md
+│   ├── referencia-sintaxis.md
+│   ├── arquitectura.md
+│   └── ejemplos/
+│
+└── output/
+    ├── catalogos.svg
+    ├── ventas.svg
+    └── empleados.pdf
+```
+
+El directorio `docs` contiene documentación del software y ejemplos de uso. No representa un módulo de documentos dentro de la aplicación.
+
+## 4.2 Manifiesto del proyecto
+
+Diseñar un manifiesto como:
+
+```yaml
+name: sistema-empresarial
+version: 1
+
+source:
+  root: .
+  packages:
+    - catalogos
+    - ventas
+    - empleados
+
+output:
+  directory: output
+  formats:
+    - svg
+    - pdf
+```
+
+El manifiesto debe permitir:
+
+- Identificar la raíz del proyecto.
+- Descubrir paquetes.
+- Localizar archivos DBML.
+- Resolver rutas relativas.
+- Configurar salidas.
+- Detectar duplicados.
+- Excluir archivos generados.
+- Definir opciones de compilación.
+
+La estructura exacta debe adaptarse al repositorio.
+
+---
+
+# 5. Sistema de paquetes inspirado en Go
+
+## 5.1 Regla principal
+
+**Cada Package corresponde a exactamente un diagrama principal renderizable.**
+
+Un paquete puede contener múltiples archivos DBML.
+
+Todos los archivos de un mismo paquete contribuyen al mismo modelo lógico del paquete.
+
+## 5.2 Sintaxis propuesta
+
+```dbml
+// Extensión propuesta, no DBML estándar
+
+Package catalogos
+```
+
+Otro archivo:
+
+```dbml
+Package ventas
+
+Import catalogos
+```
+
+Antes de implementar esta gramática, investigar el sistema de módulos e importaciones oficial de DBML.
+
+No crear un sistema de importación paralelo si las capacidades existentes permiten resolver el mismo problema.
+
+## 5.3 Reglas de paquetes
+
+- Un paquete puede contener múltiples archivos.
+- Una tabla tiene una definición lógica única.
+- Las tablas pueden referenciar tablas de otros paquetes.
+- Los nombres deben resolverse de forma determinista.
+- Deben detectarse nombres ambiguos.
+- Las dependencias deben representarse mediante un grafo.
+- Las importaciones no deben duplicar entidades.
+- Los paquetes no deben confundirse automáticamente con esquemas SQL físicos.
+
+## 5.4 Resolución de dependencias
+
+Distinguir entre:
+
+1. Dependencias de importación.
+2. Relaciones de claves foráneas.
+3. Dependencias visuales entre diagramas.
+
+Una relación de clave foránea entre paquetes no debe considerarse automáticamente un ciclo de importación inválido.
+
+Detectar únicamente los ciclos que impidan resolver correctamente el proyecto.
+
+---
+
+# 6. Parser, AST y análisis semántico
+
+## 6.1 Investigación obligatoria
+
+Antes de implementar, identificar:
+
+- Parser actual.
+- Gramática existente.
+- AST.
+- Modelo intermedio, si existe.
+- Sistema de módulos.
+- Resolución de nombres.
+- Generador SQL.
+- Renderizador.
+- Sistema de exportación.
+- Infraestructura de pruebas.
+
+## 6.2 Extensión del AST
+
+Diseñar los nodos necesarios para representar:
+
+- Project.
+- Package.
+- PackageImport.
+- Diagram.
+- TableReference.
+- ExternalTableNode.
+- RelationshipConnector.
+- DiagramNavigationTarget.
+
+Evitar introducir nodos redundantes si ya existen estructuras equivalentes.
+
+## 6.3 Análisis semántico
+
+Implementar o extender:
+
+- Tabla global de símbolos.
+- Resolución de nombres entre paquetes.
+- Validación de referencias.
+- Detección de ambigüedades.
+- Validación de columnas.
+- Validación de relaciones.
+- Detección de referencias circulares inválidas.
+- Construcción del grafo de dependencias.
+
+## 6.4 Diagnósticos
+
+Los errores deben incluir, cuando sea posible:
+
+- Archivo.
+- Línea.
+- Columna.
+- Código de error.
+- Descripción.
+- Sugerencia de corrección.
+
+---
+
+# 7. Modelo lógico global
+
+El compilador debe construir un único esquema lógico a partir de todos los paquetes.
+
+Este modelo será la fuente de verdad.
+
+Debe contener:
+
+- Tablas.
+- Columnas.
+- Claves.
+- Índices.
+- Restricciones.
+- Relaciones.
+- Identidades lógicas.
+
+Las representaciones visuales no deben crear entidades físicas adicionales.
+
+La generación SQL debe consumir exclusivamente este modelo lógico.
+
+---
+
+# 8. Tablas referenciadas: TableRef
+
+## 8.1 Objetivo
+
+Permitir que una tabla definida en un paquete aparezca visualmente en el diagrama de otro paquete sin duplicar su definición lógica.
+
+## 8.2 Modos de representación
+
+### Full
+
+Mostrar la tabla externa con todas sus columnas.
+
+### Compact
+
+Mostrar solamente las columnas seleccionadas.
+
+### Connector
+
+Sustituir la tabla por un conector hacia el diagrama propietario.
+
+## 8.3 Sintaxis conceptual
+
+```dbml
+// Sintaxis propuesta, no estándar
+
+Diagram Ventas {
+
+  include ventas.pedidos
+
+  external catalogos.paises {
+    display: compact
+    show: [id, nombre]
+  }
+
+}
+```
+
+## 8.4 Reglas
+
+- Resolver la tabla desde el esquema global.
+- Mantener su identidad lógica.
+- Permitir múltiples representaciones visuales.
+- Conservar relaciones y cardinalidades.
+- Permitir navegar al paquete propietario.
+- No generar tablas SQL adicionales.
+- No duplicar restricciones.
+- Validar las columnas visibles.
+
+---
+
+# 9. Conectores entre diagramas
+
+## 9.1 Objetivo
+
+Introducir conectores visuales inspirados en los off-page connectors utilizados en diagramas de flujo.
+
+Su función es representar una relación que continúa en otro diagrama.
+
+## 9.2 Modelo conceptual
+
+```dbml
+// Sintaxis propuesta, no estándar
+
+Diagram Ventas {
+
+  include ventas.pedidos
+
+  Connector pais {
+    relationship: ventas.pedidos.pais_id
+    target: Catalogos
+    display: offpage
+    label: CAT-01
+  }
+
+}
+```
+
+La sintaxis definitiva debe permitir identificar inequívocamente una relación, incluso cuando existan varias relaciones entre las mismas tablas.
+
+## 9.3 Requisitos
+
+Cada conector debe contener:
+
+- Identificador estable.
+- Relación lógica original.
+- Tabla origen.
+- Tabla destino.
+- Paquete origen.
+- Paquete destino.
+- Cardinalidad.
+- Opcionalidad.
+- Etiqueta visual.
+- Destino de navegación.
+
+## 9.4 Reglas
+
+- Un conector no crea una relación SQL nueva.
+- Un conector no crea una tabla nueva.
+- Debe conservar la cardinalidad original.
+- Debe poder navegar al diagrama destino.
+- Debe permitir consultar la relación original.
+- Debe funcionar en exportaciones imprimibles.
+
+---
+
+# 10. Referencias entre paquetes y diagramas
+
+## 10.1 Ejemplo
+
+```text
+Project empresa
+├── Package catalogos
+│   └── Table paises
+│
+└── Package ventas
+    └── Table pedidos
+        └── FK pais_id → catalogos.paises.id
+```
+
+En el diagrama Ventas:
+
+- `pedidos` se muestra como tabla local.
+- `paises` puede mostrarse como Full, Compact o Connector.
+- El conector permite navegar al diagrama Catálogos.
+
+En el diagrama Catálogos:
+
+- `paises` se muestra como tabla local.
+- El inspector permite consultar referencias entrantes.
+- Desde una referencia entrante se puede navegar a Ventas.
+
+## 10.2 Navegación
+
+Al seleccionar una referencia:
+
+1. Resolver el paquete propietario.
+2. Activar su pestaña.
+3. Localizar la tabla destino.
+4. Centrar el visor.
+5. Resaltar la tabla.
+6. Permitir regresar al diagrama anterior.
+
+## 10.3 Navegación inversa
+
+Implementar un índice global de relaciones.
+
+Debe permitir consultar:
+
+- Relaciones entrantes.
+- Relaciones salientes.
+- Paquetes relacionados.
+- Diagramas donde aparece una tabla.
+- Referencias externas.
+
+No confundir navegación bidireccional con relaciones SQL bidireccionales.
+
+---
+
+# 11. Interfaz de usuario
+
+## 11.1 Pestañas
+
+Cada paquete debe aparecer como una pestaña.
+
+Requisitos:
+
+- Activar el diagrama correspondiente.
+- Mostrar el nombre del paquete.
+- Mantener el estado de zoom y posición.
+- Mostrar errores asociados al paquete.
+- Soportar muchos paquetes.
+- Evitar recompilaciones innecesarias.
+
+## 11.2 Selector rápido
+
+Implementar un selector de paquetes con:
+
+- Búsqueda.
+- Navegación mediante teclado.
+- Identificación del paquete activo.
+- Apertura rápida.
+- Soporte para numerosos paquetes.
+
+Evaluar Ctrl+K o Cmd+K como atajo.
+
+## 11.3 Menús contextuales
+
+### Paquetes
+
+- Abrir.
+- Copiar identificador.
+- Exportar.
+- Ver errores.
+
+### Tablas
+
+- Ver definición.
+- Ver relaciones.
+- Ver referencias entrantes.
+- Ir al paquete propietario.
+- Copiar identificador.
+
+### Tablas externas
+
+- Mostrar Full.
+- Mostrar Compact.
+- Mostrar Connector.
+- Ir a definición original.
+
+### Conectores
+
+- Ir al diagrama destino.
+- Ver relación.
+- Mostrar tabla externa.
+- Copiar referencia.
+
+Los menús deben ser accesibles también mediante teclado.
+
+---
+
+# 12. Renderizador
+
+## 12.1 Arquitectura
+
+El renderizador debe consumir el Diagram Model, no el esquema SQL directamente.
+
+Debe distinguir entre:
+
+- LocalTableNode.
+- ExternalTableNode.
+- RelationshipEdge.
+- RelationshipConnector.
+
+## 12.2 Estilos
+
+### Tabla local
+
+Representación estándar.
+
+### Tabla externa
+
+- Borde discontinuo o estilo diferenciado.
+- Identificación del paquete propietario.
+- Indicador de navegación.
+
+### Conector
+
+- Símbolo visual específico.
+- Identificador.
+- Paquete destino.
+- Relación asociada.
+
+## 12.3 Layout
+
+El sistema debe:
+
+- Reducir cruces innecesarios.
+- Evitar superposiciones.
+- Permitir zoom.
+- Permitir desplazamiento.
+- Conservar posiciones cuando sea viable.
+- Evitar redistribuir todo el diagrama por cambios menores.
+
+Considerar un motor de layout de grafos existente si el repositorio no dispone de uno.
+
+---
+
+# 13. Exportación SVG y PDF
+
+## 13.1 Formatos
+
+Priorizar:
+
+- SVG.
+- PDF.
+
+PNG puede ser opcional.
+
+## 13.2 Requisitos
+
+- Exportar diagramas individuales.
+- Exportar todos los paquetes.
+- Soportar A4 y A3.
+- Orientación horizontal y vertical.
+- Texto legible.
+- Conectores identificables.
+- Referencias entre diagramas.
+- Evitar cortes arbitrarios de tablas.
+
+## 13.3 Referencias impresas
+
+Los conectores deben mostrar referencias estables.
+
+Ejemplo:
+
+```text
+CAT-01
+Paquete: Catalogos
+Tabla: paises
+```
+
+Los números de página deben calcularse durante la exportación final.
+
+No deben formar parte de la identidad lógica de los conectores.
+
+---
+
+# 14. Arquitectura de compilación
+
+Utilizar como referencia:
+
+```text
+Project Loader
+      |
+      v
+Package Discovery
+      |
+      v
+DBML Parser
+      |
+      v
+AST / Semantic Analysis
+      |
+      v
+Global Symbol Resolver
+      |
+      v
+Global Schema Model
+      |
+      +----------------------+
+      |                      |
+      v                      v
+SQL Generator         Diagram Compiler
+                             |
+                             v
+                       Diagram Model
+                             |
+                    +--------+--------+
+                    |                 |
+                    v                 v
+               UI Renderer       Export Engine
+                    |                 |
+                    v                 v
+              Interactive UI       SVG / PDF
+```
+
+El diseño definitivo debe adaptarse al repositorio.
+
+No crear un compilador paralelo si puede extenderse el existente.
+
+---
+
+# 15. Compatibilidad
+
+Mantener compatibilidad con DBML estándar.
+
+Requisitos:
+
+- Conservar la semántica de Table.
+- Conservar la semántica de Ref.
+- Conservar TableGroup.
+- Conservar Enum.
+- Conservar las importaciones existentes.
+- No duplicar tablas SQL.
+- No alterar silenciosamente las relaciones.
+- Permitir procesar proyectos DBML anteriores.
+
+Evaluar un mecanismo de compilación hacia DBML estándar para las partes del modelo que puedan representarse sin pérdida semántica.
+
+---
+
+# 16. Rendimiento y escalabilidad
+
+Diseñar para cientos o miles de tablas.
+
+Considerar:
+
+- Caché de archivos analizados.
+- Resolución incremental.
+- Índices de símbolos.
+- Índices de relaciones.
+- Evitar duplicar tablas en memoria.
+- Compilación por paquete.
+- Renderizado independiente.
+- Actualización selectiva de diagramas.
+- Generación determinista.
+
+No introducir optimizaciones complejas sin justificar su necesidad.
+
+---
+
+# 17. Pruebas automatizadas
+
+Implementar pruebas unitarias, de integración y de regresión.
+
+Casos obligatorios:
+
+1. Proyecto con un archivo.
+2. Proyecto con múltiples archivos.
+3. Paquete con varios archivos.
+4. Proyecto con varios paquetes.
+5. Relaciones entre paquetes.
+6. Importaciones válidas.
+7. Importaciones inválidas.
+8. Nombres ambiguos.
+9. TableRef Full.
+10. TableRef Compact.
+11. TableRef Connector.
+12. Múltiples instancias visuales de una tabla.
+13. Relaciones múltiples entre dos tablas.
+14. Conectores entre diagramas.
+15. Navegación entre paquetes.
+16. Navegación inversa.
+17. Referencias rotas.
+18. Cardinalidades.
+19. Exportación SQL.
+20. Exportación SVG.
+21. Exportación PDF.
+22. Compatibilidad con DBML estándar.
+23. Compilación determinista.
+24. Proyectos grandes.
+25. Actualización incremental.
+
+---
+
+# 18. Manual de usuario
+
+Crear un manual completo en español.
+
+El manual debe documentar el uso del software, no implementar un módulo de documentos dentro de la aplicación.
+
+Estructura sugerida:
+
+```text
+docs/
+├── manual-usuario.md
+├── referencia-sintaxis.md
+├── arquitectura.md
+├── guia-desarrollador.md
+└── ejemplos/
+    ├── proyecto-basico/
+    ├── multiples-paquetes/
+    ├── referencias-externas/
+    └── conectores/
+```
+
+## Contenido obligatorio
+
+1. Introducción al software.
+2. Instalación y ejecución.
+3. Creación de proyectos.
+4. Configuración del manifiesto.
+5. Creación de paquetes.
+6. Organización de archivos DBML.
+7. Relaciones entre paquetes.
+8. TableRef.
+9. Modos Full, Compact y Connector.
+10. Conectores entre diagramas.
+11. Navegación mediante pestañas.
+12. Selector rápido.
+13. Menús contextuales.
+14. Inspector de referencias.
+15. Exportación SVG y PDF.
+16. Ejemplos completos.
+17. Solución de problemas.
+
+Todos los ejemplos deben utilizar sintaxis realmente implementada y comprobada.
+
+---
+
+# 19. Plan de implementación
+
+## Fase 1 — Auditoría técnica
+
+Inspeccionar el repositorio y documentar:
+
+- Lenguaje de programación.
+- Framework.
+- Parser.
+- AST.
+- Sistema de módulos.
+- Modelo semántico.
+- Generador SQL.
+- Renderizador.
+- Dependencias.
+- Pruebas existentes.
+
+## Fase 2 — Diseño de arquitectura
+
+Proponer:
+
+- Gramática.
+- Project Model.
+- Package Model.
+- Schema Model.
+- Diagram Model.
+- Navigation Model.
+- Resolución de referencias.
+- Compatibilidad.
+- Plan de migración.
+
+## Fase 3 — Compilación modular
+
+Implementar:
+
+- Project Loader.
+- Package Discovery.
+- Composición de archivos.
+- Resolución de símbolos.
+- Esquema global.
+
+## Fase 4 — Diagramas
+
+Implementar:
+
+- Un diagrama por paquete.
+- TableRef.
+- Modos Full, Compact y Connector.
+- RelationshipConnector.
+- Resolución de referencias visuales.
+
+## Fase 5 — Interfaz
+
+Implementar:
+
+- Pestañas.
+- Selector rápido.
+- Menús contextuales.
+- Navegación entre diagramas.
+- Historial.
+- Inspector de referencias.
+
+## Fase 6 — Exportación
+
+Implementar:
+
+- SVG.
+- PDF.
+- Configuración de página.
+- Referencias entre diagramas.
+
+## Fase 7 — Pruebas y documentación
+
+Implementar:
+
+- Pruebas automatizadas.
+- Pruebas de regresión.
+- Ejemplos verificables.
+- Manual de usuario.
+- Referencia de sintaxis.
+- Documentación de arquitectura.
+
+---
+
+# 20. Criterios de aceptación
+
+La implementación se considera completa cuando:
+
+- Un proyecto contiene múltiples paquetes.
+- Un paquete contiene múltiples archivos DBML.
+- Cada paquete genera exactamente un diagrama principal.
+- Las tablas se definen una sola vez.
+- Las relaciones entre paquetes se resuelven correctamente.
+- Las tablas externas soportan Full, Compact y Connector.
+- Los conectores permiten navegar entre diagramas.
+- Las referencias entrantes y salientes son consultables.
+- La interfaz permite navegar mediante pestañas y selector.
+- Los menús contextuales funcionan.
+- La exportación SQL no duplica entidades.
+- SVG y PDF conservan referencias identificables.
+- DBML estándar continúa funcionando.
+- Existen pruebas automatizadas.
+- Existe un manual completo con ejemplos funcionales.
+
+---
+
+# 21. Instrucciones finales al agente
+
+Antes de implementar:
+
+1. Inspecciona el repositorio completo.
+2. Identifica las capacidades existentes.
+3. Consulta la documentación oficial de DBML.
+4. Determina qué partes requieren extensiones reales.
+5. Evita duplicar funcionalidades existentes.
+6. Propón una arquitectura concreta.
+7. Presenta la gramática extendida.
+8. Identifica los archivos que deberán modificarse.
+9. Explica los riesgos de compatibilidad.
+10. Presenta un plan de implementación por fases.
+
+**No realices cambios estructurales importantes hasta que se apruebe el diseño.**
+
+No inventes funcionalidades existentes ni documentes características propuestas como si ya estuvieran implementadas.
+
+Prioriza una implementación incremental, modular, verificable y compatible con DBML estándar.
+
+**Resultado esperado: un sistema DBML extensible que permita modelar bases de datos grandes mediante proyectos modulares, paquetes renderizables, referencias externas y diagramas interconectados, acompañado de un manual de usuario completo.**

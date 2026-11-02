@@ -1,0 +1,4 @@
+name: referencias-externas
+version: 1
+source:
+  packages: [catalogos, ventas]

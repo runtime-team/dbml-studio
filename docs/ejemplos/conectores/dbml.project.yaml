@@ -1,0 +1,4 @@
+name: conectores
+version: 1
+source:
+  packages: [catalogos, ventas]

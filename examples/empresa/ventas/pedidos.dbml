@@ -1,0 +1,8 @@
+use * from '../catalogos/paises'
+
+Table pedidos {
+  id int [pk]
+  pais_id int [ref: > paises.id]
+  demostraccion varchar
+  
+}

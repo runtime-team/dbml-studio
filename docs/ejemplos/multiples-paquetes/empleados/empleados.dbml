@@ -1,0 +1,7 @@
+use * from '../catalogos/paises'
+
+Table empleados {
+  id int [pk]
+  nombre varchar [not null]
+  pais_id int [ref: > paises.id]
+}

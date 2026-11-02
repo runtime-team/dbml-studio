@@ -1,0 +1,10 @@
+package: ventas
+external:
+  # La misma tabla lógica con dos representaciones visuales.
+  - id: resumen
+    table: public.paises
+    display: compact
+    show: [id, nombre]
+  - id: completa
+    table: public.paises
+    display: full

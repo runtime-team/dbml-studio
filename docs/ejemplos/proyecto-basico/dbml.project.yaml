@@ -1,0 +1,7 @@
+name: tienda-basica
+version: 1
+source:
+  packages: [tienda]
+output:
+  directory: output
+  formats: [svg, pdf]

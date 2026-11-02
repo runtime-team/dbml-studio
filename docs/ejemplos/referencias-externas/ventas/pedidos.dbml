@@ -1,0 +1,7 @@
+use * from '../catalogos/paises'
+
+Table pedidos {
+  id int [pk]
+  pais_envio int [ref: > paises.id]
+  pais_facturacion int [ref: > paises.id]
+}

@@ -1,0 +1,53 @@
+{
+  "name": "dbml-studio",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "docs:dev": "vitepress dev docs --host 127.0.0.1 --port 5174 --strictPort",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs --host 127.0.0.1 --port 4174",
+    "server": "bun run server.ts",
+    "dev:all": "bun run scripts/dev-all.ts",
+    "create-user": "bun run scripts/create-user.ts",
+    "build": "vite build && bun run docs:build",
+    "test": "bun test",
+    "import-project": "bun run scripts/import-project.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/pdfkit": "^0.17.7",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@types/svg-to-pdfkit": "^0.1.4",
+    "vitepress": "^2.0.0-alpha.21"
+  },
+  "peerDependencies": {
+    "typescript": "^7"
+  },
+  "dependencies": {
+    "@codemirror/commands": "^6.11.1",
+    "@codemirror/language": "^6.13.1",
+    "@codemirror/state": "^6.7.6",
+    "@codemirror/view": "^6.43.15",
+    "@dbml/core": "^11.0.0",
+    "@libsql/client": "^0.18.0",
+    "@tailwindcss/vite": "^4.3.3",
+    "@vitejs/plugin-react": "^6.1.2",
+    "codemirror": "^6.0.2",
+    "fflate": "0.8.3",
+    "lib0": "^0.2.119",
+    "lucide-react": "^1.66.0",
+    "pdfkit": "^0.20.2",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "svg-to-pdfkit": "^0.1.8",
+    "tailwindcss": "^4.3.3",
+    "vite": "^8.3.5",
+    "y-protocols": "^1.0.7",
+    "yaml": "^2.9.1",
+    "yjs": "^13.6.33"
+  }
+}

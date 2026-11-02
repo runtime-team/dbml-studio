@@ -1,0 +1,7 @@
+use * from './ventas'
+
+Table detalles {
+  pedido_id int [ref: > pedidos.id]
+  producto varchar [not null]
+  cantidad int [not null]
+}
